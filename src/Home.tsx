@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
+import KeepAwake from 'react-native-keep-awake';
 import { Text, View, TouchableOpacity, Alert } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { useNetInfoInstance } from '@react-native-community/netinfo';
-import { useSocketServer } from './useWebSocketServer';
+import { useSimpleSocketServer } from './useSimpleSocketServer';
 
 const Home = () => {
   const [serverUrl, setServerUrl] = useState<string | null>(null);
@@ -21,12 +22,17 @@ const Home = () => {
 
   const { netInfo } = useNetInfoInstance(paused, config);
   const { isRunning, clientCount, error, startServer, stopServer } =
-    useSocketServer(9142);
+    useSimpleSocketServer(9142);
+
+  useEffect(() => {
+    KeepAwake.activate();
+    return () => KeepAwake.deactivate();
+  }, []);
 
   useEffect(() => {
     if (netInfo && netInfo.isConnected) {
       const details = netInfo.details as any;
-      setServerUrl(`ws://${details?.ipAddress}:9142`);
+      setServerUrl(`${details?.ipAddress}:9142`);
       setPaused(true);
     } else {
       setServerUrl(null);
@@ -79,7 +85,7 @@ const Home = () => {
 
         {/* Informações do Servidor */}
         <Text style={{ fontSize: 16, marginBottom: 5 }}>
-          Servidor Socket WebRTC:
+          Servidor Socket Simples:
         </Text>
         <Text style={{ fontWeight: 'bold', marginBottom: 5, fontSize: 18 }}>
           {serverUrl || 'Aguardando rede...'}

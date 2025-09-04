@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cliente Socket Simples</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .connected { background: #d4edda; color: #155724; }
+        .disconnected { background: #f8d7da; color: #721c24; }
+        .message { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 3px; }
+        input, button { padding: 8px; margin: 5px; }
+        button { background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        #messages { max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔌 Cliente Socket Simples</h1>
+        
+        <div>
+            <input type="text" id="serverUrl" placeholder="IP:Porta (ex: 192.168.1.100:9142)" style="width: 250px;">
+            <button onclick="connect()">Conectar</button>
+            <button onclick="disconnect()">Desconectar</button>
+        </div>
+        
+        <div id="status" class="status disconnected">❌ Desconectado</div>
+        
+        <h3>📨 Enviar Mensagem:</h3>
+        <div>
+            <select id="messageType">
+                <option value="offer">Offer (Oferta)</option>
+                <option value="answer">Answer (Resposta)</option>
+                <option value="ice-candidate">ICE Candidate</option>
+                <option value="join">Join (Entrar)</option>
+                <option value="leave">Leave (Sair)</option>
+                <option value="custom">Personalizada</option>
+            </select>
+        </div>
+        <div>
+            <input type="text" id="messageData" placeholder="Dados da mensagem (JSON)" style="width: 400px;">
+            <button onclick="sendMessage()">Enviar</button>
+        </div>
+        
+        <h3>📥 Mensagens Recebidas:</h3>
+        <div id="messages"></div>
+        
+        <h3>🧪 Testes Rápidos:</h3>
+        <button onclick="testOffer()">Teste Offer</button>
+        <button onclick="testAnswer()">Teste Answer</button>
+        <button onclick="testICE()">Teste ICE</button>
+        <button onclick="testJoin()">Teste Join</button>
+    </div>
+
+    <script>
+        let socket = null;
+        let messageCount = 0;
+
+        function connect() {
+            const url = document.getElementById('serverUrl').value || '192.168.1.100:9142';
+            
+            try {
+                // Tentar conexão TCP via WebSocket (não vai funcionar diretamente)
+                // Este é apenas um exemplo - precisa de um cliente TCP real
+                socket = new WebSocket(`ws://${url}`);
+                
+                socket.onopen = () => {
+                    updateStatus('✅ Conectado', 'connected');
+                    log('🔌 Conectado ao servidor!');
+                };
+                
+                socket.onmessage = (event) => {
+                    const message = JSON.parse(event.data);
+                    log(`📨 Recebido: ${JSON.stringify(message, null, 2)}`);
+                };
+                
+                socket.onclose = () => {
+                    updateStatus('❌ Desconectado', 'disconnected');
+                    log('🔌 Conexão fechada');
+                };
+                
+                socket.onerror = (error) => {
+                    updateStatus('❌ Erro na conexão', 'disconnected');
+                    log(`❌ Erro: ${error}`);
+                };
+                
+            } catch (error) {
+                log(`❌ Erro ao conectar: ${error.message}`);
+            }
+        }
+
+        function disconnect() {
+            if (socket) {
+                socket.close();
+                socket = null;
+            }
+        }
+
+        function sendMessage() {
+            if (!socket || socket.readyState !== WebSocket.OPEN) {
+                alert('Não conectado ao servidor!');
+                return;
+            }
+
+            const type = document.getElementById('messageType').value;
+            const dataInput = document.getElementById('messageData').value;
+            
+            let data = {};
+            if (dataInput) {
+                try {
+                    data = JSON.parse(dataInput);
+                } catch (e) {
+                    data = { text: dataInput };
+                }
+            }
+
+            const message = { type, data };
+            socket.send(JSON.stringify(message));
+            log(`📤 Enviado: ${JSON.stringify(message, null, 2)}`);
+        }
+
+        function testOffer() {
+            document.getElementById('messageType').value = 'offer';
+            document.getElementById('messageData').value = JSON.stringify({
+                sdp: 'v=0\\r\\no=test 123456 654321 IN IP4 192.168.1.100\\r\\n...',
+                type: 'offer'
+            });
+            sendMessage();
+        }
+
+        function testAnswer() {
+            document.getElementById('messageType').value = 'answer';
+            document.getElementById('messageData').value = JSON.stringify({
+                sdp: 'v=0\\r\\no=test 123456 654321 IN IP4 192.168.1.100\\r\\n...',
+                type: 'answer'
+            });
+            sendMessage();
+        }
+
+        function testICE() {
+            document.getElementById('messageType').value = 'ice-candidate';
+            document.getElementById('messageData').value = JSON.stringify({
+                candidate: 'candidate:1 1 UDP 2130706431 192.168.1.100 54400 typ host',
+                sdpMid: 'audio',
+                sdpMLineIndex: 0
+            });
+            sendMessage();
+        }
+
+        function testJoin() {
+            document.getElementById('messageType').value = 'join';
+            document.getElementById('messageData').value = JSON.stringify({
+                roomId: 'sala-teste',
+                userId: 'user-' + Date.now()
+            });
+            sendMessage();
+        }
+
+        function updateStatus(text, className) {
+            const status = document.getElementById('status');
+            status.textContent = text;
+            status.className = `status ${className}`;
+        }
+
+        function log(message) {
+            const messages = document.getElementById('messages');
+            const div = document.createElement('div');
+            div.className = 'message';
+            div.innerHTML = `<small>${new Date().toLocaleTimeString()}</small><br><pre>${message}</pre>`;
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        // Conectar automaticamente se URL estiver preenchida
+        window.onload = () => {
+            log('🚀 Cliente carregado! Digite o IP:Porta e clique em Conectar.');
+        };
+    </script>
+</body>
+</html>
