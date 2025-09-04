@@ -1,97 +1,158 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# PoC: Servidor Web/Socket React Native
 
-# Getting Started
+## Objetivo
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+Estudar viabilidade técnica e identificar desafios na implementação de servidor web/socket utilizando React Native como servidor para signaling WebRTC offline
 
-## Step 1: Start Metro
+## Funcionalidades a serem implementadas
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+### Inicialização do servidor
+- **Obtenção do IP LAN**: Detecta automaticamente o endereço IP do dispositivo na rede local
+- **Porta Aleatória**: Obtém uma porta livre disponível no sistema
+- **Servidor Web**: Inicializa servidor HTTP no IP e porta detectados
+- **Socket Server**: Inicializa servidor socket no mesmo IP e porta
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+### Endpoints e Listeners
+- **HTTP Endpoint**: Responde a requisições GET/POST com `PONG + timestamp`
+- **Socket Event Listener**: Escuta eventos e responde com `PONG + timestamp`
 
-```sh
-# Using npm
-npm start
+## Arquitetura da PoC
 
-# OR using Yarn
-yarn start
+```
+┌─────────────────┐    ┌─────────────────┐
+│ Dispositivo iOS │    │   Cliente       │
+│   ou Android    │    │ (Desktop/Mobile)│
+│                 │    │                 │
+│  React Native   │◄──►│  Browser/curl   │
+│  HTTP Server    │    │  HTTP Client    │
+│  Socket Server  │    │  Socket Client  │
+└─────────────────┘    └─────────────────┘
+         │                       │
+         └───────────────────────┘
+              Rede LAN Local
 ```
 
-## Step 2: Build and run your app
+## O que deve ser avaliado na PoC
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+### Questões a serem respondidas para cada protocolo (HTTP/Socket) e plataforma (iOS/Android):
 
-### Android
+#### Viabilidade Técnica
+- É possível implementar um servidor web via React Native?
+- É possível implementar um servidor socket via React Native?
+- Quais são as limitações técnicas de cada abordagem?
 
-```sh
-# Using npm
-npm run android
+#### Complexidade de Implementação
+- Qual a complexidade para detectar IP LAN automaticamente?
+- Qual a complexidade para obter porta livre?
+- Qual a complexidade para inicializar servidor HTTP?
+- Qual a complexidade para inicializar servidor Socket?
+- Quantas dependências externas são necessárias?
+- Há diferenças significativas entre iOS e Android?
 
-# OR using Yarn
-yarn android
-```
+#### Bibliotecas e Tecnologias
+- Quais bibliotecas são necessárias para cada funcionalidade?
+- Existem alternativas disponíveis?
+- Qual o nível de maturidade e suporte das bibliotecas?
+- Há dependências nativas necessárias?
+- Quais bibliotecas são production-ready vs experimentais?
 
-### iOS
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+#### Desempenho
+- Qual o tempo de resposta para requisições HTTP?
+- Qual o tempo de resposta para comunicação via Socket?
+- Qual o consumo de bateria durante operação?
+- Qual o uso de memória?
+- Quantas conexões simultâneas são suportadas?
+- Qual o throughput máximo de mensagens?
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+#### Estabilidade
+- O servidor mantém funcionamento em background?
+- Como se comporta durante mudanças de rede?
+- Como gerencia erros de conexão?
+- Há memory leaks durante operação prolongada?
+- Como se recupera de falhas?
 
-```sh
-bundle install
-```
+## Metodologia de Testes
 
-Then, and every time you update your native dependencies, run:
+### Testes de Viabilidade
+1. **Teste de Inicialização**: Verificar se o servidor inicia corretamente
+2. **Teste de Conectividade**: Confirmar acesso via browser/curl de outro dispositivo
+3. **Teste de Resposta**: Validar resposta PONG + timestamp
 
-```sh
-bundle exec pod install
-```
+### Testes de Performance
+1. **Latência**: Medir tempo de resposta usando ferramentas como curl ou postman
+2. **Stress Test**: Múltiplas requisições simultâneas
+3. **Monitoramento de Recursos**: CPU, memória e bateria durante operação
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+### Testes de Estabilidade
+1. **Teste de Longa Duração**: Servidor ativo por períodos prolongados
+2. **Teste de Reconexão**: Comportamento após perda de conectividade
+3. **Teste de Background**: Funcionamento quando app está em segundo plano
 
-```sh
-# Using npm
-npm run ios
+## Cenários de Teste
 
-# OR using Yarn
-yarn ios
-```
+### Cenário 1: Servidor HTTP
+- **Setup**: App React Native inicializa servidor HTTP na porta X
+- **Teste**: Dispositivo externo acessa `http://[IP_DO_DISPOSITIVO]:[PORTA]/ping` via browser
+- **Expectativa**: Resposta JSON com `{"message": "PONG", "timestamp": 1234567890}`
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+### Cenário 2: Servidor Socket
+- **Setup**: App React Native inicializa servidor Socket na porta Y
+- **Teste**: Cliente socket externo conecta e envia mensagem
+- **Expectativa**: Resposta com `PONG + timestamp`
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+### Cenário 3: Múltiplos Clientes
+- **Setup**: Servidor ativo
+- **Teste**: 5+ clientes simultâneos fazendo requisições
+- **Expectativa**: Todos recebem resposta sem degradação significativa
 
-## Step 3: Modify your app
+## Matriz de Comparação (a ser preenchida após testes)
 
-Now that you have successfully run the app, let's make changes!
+| Critério | HTTP iOS | HTTP Android | Socket iOS | Socket Android |
+|----------|----------|--------------|------------|----------------|
+| **Viabilidade** | ? | ? | ? | ? |
+| **Complexidade** | ? | ? | ? | ? |
+| **Bibliotecas** | ? | ? | ? | ? |
+| **Performance** | ? | ? | ? | ? |
+| **Estabilidade** | ? | ? | ? | ? |
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+## Deliverables da PoC
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+### Relatório Final
+Documento contendo:
+- Análise comparativa entre HTTP vs Socket
+- Análise comparativa entre iOS vs Android  
+- Avaliação de bibliotecas disponíveis (maturidade, suporte, limitações)
+- Limitações técnicas identificadas durante implementação
+- Recomendações baseadas nos testes
+- Próximos passos sugeridos
 
-## Congratulations! :tada:
+### Código de Exemplo
+- Implementação funcional para cada cenário testado
+- Scripts de teste automatizados
+- Documentação de configuração
 
-You've successfully run and modified your React Native App. :partying_face:
+### Métricas Coletadas
+- Tempos de resposta por cenário
+- Consumo de recursos
+- Taxa de sucesso/falha
+- Logs de erro e comportamento
 
-### Now what?
+# Achados e Respostas
+Deverão ser anotados aqui todos os achados realizados durante a execução da PoC.
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+- Não é 
 
-# Troubleshooting
+## Bibliotecas
+| Biblioteca | Finalidade | Status | Obs. |
+|------------|------------|--------|------|
+| **react-native-http-server** | servidor web | 🚫 | Android only, não mantida desde 2016, não é production ready |
+| **expo-network** | network | 🚫 | Funciona apenas com Expo. Incapaz de obter IP LAN real devido a restrições de segurança do iOS. |
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+### expo-network
+- Funciona apenas no Expo. 
+- Incapaz de obter IP local real do dispositivo pois o Expo Go não possui permissões. Para funcionar, precisaria adicionar permissões ao app.json e gerar uma build com EAS, o que iria necessitar uma conta de desenvolvedor da Apple (99usd/ano).
 
-# Learn More
+---
 
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
