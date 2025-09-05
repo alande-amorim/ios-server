@@ -16,7 +16,7 @@ export const useSimpleSocketServer = (port: number) => {
   const [isRunning, setIsRunning] = useState(false);
   const [clientCount, setClientCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  
+
   const serverRef = useRef<any>(null);
   const clientsRef = useRef<Map<string, any>>(new Map());
 
@@ -29,7 +29,7 @@ export const useSimpleSocketServer = (port: number) => {
       server.on('connection', (socket: any) => {
         const clientId = `client_${Date.now()}`;
         console.log(`✅ Cliente conectado: ${clientId}`);
-        
+
         clientsRef.current.set(clientId, socket);
         setClientCount(clientsRef.current.size);
 
@@ -42,7 +42,6 @@ export const useSimpleSocketServer = (port: number) => {
             // EVENTO 2: Retransmitir para outros clientes
             const messageWithSender = { ...message, from: clientId };
             broadcast(messageWithSender, clientId);
-            
           } catch (err) {
             console.error('❌ Erro ao processar mensagem:', err);
           }
@@ -99,7 +98,7 @@ export const useSimpleSocketServer = (port: number) => {
   // EVENTO 4: Broadcast (enviar para todos)
   const broadcast = (message: Message, excludeClientId?: string) => {
     const messageStr = JSON.stringify(message);
-    
+
     clientsRef.current.forEach((socket, clientId) => {
       if (clientId !== excludeClientId && socket.readyState !== 'closed') {
         socket.write(messageStr);
@@ -125,7 +124,7 @@ export const useSimpleSocketServer = (port: number) => {
     isRunning,
     clientCount,
     error,
-    
+
     // Eventos/Ações
     startServer,
     stopServer,
